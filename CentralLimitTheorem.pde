@@ -1,4 +1,4 @@
-// Central Limit Theorem in Processing.
+// Central Limit Theorem using Processing.
 // November 2012
 
 
@@ -6,19 +6,14 @@
 //// Declare and initialize variables.
 
 // Pegs variables.
-int N = 11;             // # of rows (= # pegs in the last row).
+int N = 11;            // there are N+1 rows and N+2 vertical bars
 int rad = 10;          // radius of pegs and balls.  
 int peg_dist = 16;     // distance between pegs.
 int pegX, pegY;        // hold the coords used for drawing the pegs.
 
-// Falling variables.
-//int MAXFALLING = 1;  // # of balls allowed to fall 
-                     // down the pegs at once.
-//int num_falling = 0; // keep track of # of balls 
-                     // currently in the pegs.
+// Variables for falling ball.
 int bin_num = 0;     // holds the x value of the column 
-                     // in which the ball fell.
-//int prev_bin_num = 0;// FOR DEBUGGING                     
+                     // in which the ball fell.                     
 int thresholdY = 0;  // holds the bottom of the pegs; tells
                      // the program when the ball needs to just 
                      // fall straight down.  
@@ -33,22 +28,20 @@ int col_count = -1;  // we count up to the column (from -1)
                      // for each falling ball.
 int colFall = 0;     // holds the x value for the final column
 
-// User input variables.
-// Speed.
-float SPEED_MAX = peg_dist;               // Max is 2^4.
-float SPEED_MIN = 0;                      // Min is 2^0.
-float speed = 0;
-//float speed = 0.5*(SPEED_MAX+SPEED_MIN);  // # of pixels to move each tick
-                                          // (i.e. each frame)
-float speed_factor = 1;                   // # by which we change the speed.
-//float change = speed_factor;            // holds the current speed change,
-                                          // which is + or -speed_factor.
-int stats_flag = 0;                       // 0: display nothing
-                                          // 1: display %-age
-                                          // 2: display #s
-int STATS_MAX = 2;                        // Used for resetting the stats_flag.
 
-// Stats variables.
+// Variable for user input.
+// Speed.
+float SPEED_MAX = peg_dist;    // Max is 2^4.
+float SPEED_MIN = 0;           // Min is 2^0.
+float speed = 0;
+float speed_factor = 1;        // # by which we change the speed.
+int stats_flag = 0;            // 0: display nothing
+                               // 1: display %-age
+                               // 2: display #s
+int STATS_MAX = 2;             // Used for resetting the stats_flag.
+
+
+// Variables for stats.
 int[] binArray = new int[N+1];  // holds the # of balls which fell
                                 // into each of the N+1 columns
 int numBalls = 0;               // holds the overall # of balls, 
@@ -57,26 +50,35 @@ float[] stats = new float[N+1]; // Contains %-age data for each column.
 String s;                       // Holds text for printing stats.
 
 
+// Variables for up and down unicode characters.
+String sUp = "2191";            // Unicode for the up arrow.
+int nUp = unhex(sUp);
+char[] cUp = Character.toChars(nUp);
+String chUp = new String(cUp);
 
+String sDown = "2193";          // Unicode for the down arrow.
+int nDown = unhex(sDown);
+char[] cDown = Character.toChars(nDown);
+String chDown = new String(cDown);
+  
+  
+  
 // Processing consists of a setup loop and a draw loop. Setup
 // runs once. Draw is an infinite while loop although it can be
-// interrupted by the user, via the keyboard, mouse, etc.
+// interrupted by the user via the keyboard, mouse, etc.
 void setup()
 {
-  size(400, 600);
+  size(400, 500);
   
   x = width/2;        // starting point for x
   y = 0;              // starting point for y  
   colFall = (width/2)-((N+2)*peg_dist);
   
   // Initialize the speed.
-  //speed = speed_factor;
   speed = pow(2, speed_factor);
   
-  //frameRate(30);
+  // Use a moderate frame rate.
   frameRate(60);
-  //frameRate(120);
-  //frameRate(240);
 }
 
 
@@ -85,9 +87,8 @@ void draw()
   //////////////////////////////////////////////////////
   // We re-draw everything each time through the loop.
   
-  // Draw background color.
-  //background(255,255,0);  // yellow
-  background(100);          // gray
+  // Draw gray background.
+  background(100);
   
   // Draw the pegs. This function keeps the diagonal 
   // distance constant between pegs.  
@@ -96,8 +97,8 @@ void draw()
   
   //////////////////////////////////////////////////////
   // Draw falling ball(s).
-  // By returning the column number, this function allows
-  // us to 
+  // By returning the column number, this function 
+  // provides a means for drawing the bars.
   bin_num = drawFallingBall();
   
   // Define the first rectangle as the left-most rectangle. 
@@ -111,16 +112,15 @@ void draw()
     // Add 10 to the height in case we end up rounding the corners
     // of the rectangles.
     fill(255);
-    rect(rectX+peg_dist, rectY, 2*peg_dist, binArray[i]+10, 7);
+    rect(rectX+peg_dist, rectY, 2*peg_dist, binArray[i]+9, 7);
     rectX += 2*peg_dist;
   }
   
-  // Track/draw bars.
+  // Track heights of the bars.
   if (bin_num >= 0)
   {
     binArray[bin_num]++;
     numBalls++;
-    //prev_bin_num = bin_num;
   }  
   
   // Re-use the rectangle x values for the %-age text.
@@ -140,12 +140,14 @@ void draw()
         }
         case 1:
         {
+          // Calculate percentages, store to a string.
           stats[i] = ((float)(binArray[i]))/((float)(numBalls));
           s = String.format("%.2f", stats[i]);
           break;
         }
         case 2:
         {
+          // Store the count to a string.
           s = String.format("%s", str(binArray[i]));
           break;
         }
@@ -156,19 +158,23 @@ void draw()
         }
       }
       fill(255);
-      //text(s, rectX, thresholdY+30+10*pow(-1,i));
       text(s, rectX, thresholdY+30);
       rectX += 2*peg_dist;
     }
-  }
+  }  
     
-  // FOR DEBUG:
-  fill(0);
-  //text("x,y = " + str(x) + ", " + str(y), width*2/3+20, 2*peg_dist/3);
-  //text("bin # = " + str(prev_bin_num), width*2/3+20, 4*peg_dist/3);
-  text("balls = " + str(numBalls), width*2/3+20, 6*peg_dist/3);
-  text("speed = " + str(speed), width*2/3+20, 8*peg_dist/3); 
-  //text("flag = " + str(stats_flag), width*2/3+20, 10*peg_dist/3);
+  // Display controls in the upper left corner.
+  fill(0);            // Makes the following text black.  
+  text("change speed: ", 10, 3*peg_dist/2);
+  text(chUp, 102, 3*peg_dist/2);
+  text(chDown, 110, 3*peg_dist/2);
+  text("toggle stats: tab", 10, 5*peg_dist/2);
+  text("quit: esc", 10, 7*peg_dist/2);
+  
+    
+  // Display stats in the upper right corner.
+  text("count: " + str(numBalls), width*2/3+50, 3*peg_dist/2);
+  text("speed: " + str((int)speed_factor), width*2/3+50, 5*peg_dist/2); 
 }
 
 
@@ -194,10 +200,6 @@ void drawPegs(int r, int b, int g)
     }
   }
   thresholdY = pegY;
-  
-  // FOR DEBUG... we could draw diamonds in the space between pegs.
-  //fill(128, 128, 128);
-  //quad((pegX-4*peg_dist), (pegY), (pegX-3*peg_dist), (pegY-peg_dist), (pegX-2*peg_dist), (pegY), pegX-3*peg_dist, pegY+peg_dist);
 }
 
 
